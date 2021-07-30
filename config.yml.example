@@ -1,0 +1,3 @@
+watch_file: "secrets.yml"
+mattermost_channel: "test"
+mattermost_token: ""
