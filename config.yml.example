@@ -1,3 +1,4 @@
 watch_file: "secrets.yml"
 mattermost_channel: "test"
 mattermost_token: ""
+mattermost_mentions: "@here @channel"

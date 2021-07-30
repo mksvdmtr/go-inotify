@@ -16,6 +16,7 @@ type Config struct {
 	WatchFile string `yaml:"watch_file"`
 	MattermostChannel string `yaml:"mattermost_channel"`
 	MattermostToken string `yaml:"mattermost_token"`
+	MattermostMentions string `yaml:"mattermost_mentions"`
 }
 
 var config Config
@@ -26,7 +27,7 @@ func (c *Config) notify(msg string) {
 		log.Fatalf("Error getting hostname: %s", err)
 	}
 	webhookUrl := "https://bfchat.ru/hooks/" + c.MattermostToken
-	text := fmt.Sprintf("@channel **Зафиксированы изменения в %s (%s) на %s.**\n", c.WatchFile, msg, host)
+	text := fmt.Sprintf("%s **Зафиксированы изменения в %s (%s) на %s.**\n", c.MattermostMentions, c.WatchFile, msg, host)
 
 	payload := slack.Payload{
 		Text:      text,
@@ -45,6 +46,7 @@ func (c *Config) notify(msg string) {
 func main() {
 	configFile := flag.String("c", "config.yml", "go-inotify -c config.yml")
 	flag.Parse()
+	config.MattermostMentions = ""
 	configsFileData, err := ioutil.ReadFile(*configFile)
 	if err = yaml.Unmarshal(configsFileData, &config); err != nil {
 		config.notify(err.Error())
