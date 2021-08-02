@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"time"
 )
 
@@ -22,16 +23,24 @@ type Config struct {
 var config Config
 
 func (c *Config) notify(msg string) {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := os.Stat(path.Join(userHomeDir, ".go-inotify.lock")); !os.IsNotExist(err) {
+		log.Println("~/.go-inotify.lock exist")
+		return
+	}
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatalf("Error getting hostname: %s", err)
 	}
 	webhookUrl := "https://bfchat.ru/hooks/" + c.MattermostToken
-	text := fmt.Sprintf("%s **Зафиксированы изменения в %s (%s) на %s.**\n", c.MattermostMentions, c.WatchFile, msg, host)
+	text := fmt.Sprintf("%s **Зафиксированы изменения в %s на %s.**\n", c.MattermostMentions, msg, host)
 
 	payload := slack.Payload{
 		Text:      text,
-		Username:  "Process watcher",
+		Username:  "Inotifywait",
 		Channel:   c.MattermostChannel,
 		IconEmoji: ":warning:",
 	}
@@ -48,8 +57,11 @@ func main() {
 	flag.Parse()
 	config.MattermostMentions = ""
 	configsFileData, err := ioutil.ReadFile(*configFile)
+	if err != nil {
+		flag.Usage()
+		log.Fatal(err)
+	}
 	if err = yaml.Unmarshal(configsFileData, &config); err != nil {
-		config.notify(err.Error())
 		log.Fatal(err)
 	}
 	watcher, err := inotify.NewWatcher()
